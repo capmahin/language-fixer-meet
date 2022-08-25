@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-const socket = io('/')
-const videoGrid = document.getElementById('video-grid')
-const myPeer = new Peer(undefined, {
-  path: '/peerjs',
-  host: '/',
-  port: '4000'
-})
-let myVideoStream;
-const myVideo = document.createElement('video')
-=======
 const socket = io("/");
 const chatInputBox = document.getElementById("chat_message");
 const all_messages = document.getElementById("all_messages");
@@ -16,7 +5,6 @@ const leave_meeting = document.getElementById("leave-meeting");
 const main__chat__window = document.getElementById("main__chat__window");
 const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
->>>>>>> 51c465c2b5dad4b01de065a6fe87dc5f52a704ae
 myVideo.muted = true;
 
 var peer = new Peer(undefined, {

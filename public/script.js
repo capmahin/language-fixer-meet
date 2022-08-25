@@ -1,6 +1,7 @@
 const socket = io("/");
 const chatInputBox = document.getElementById("chat_message");
 const all_messages = document.getElementById("all_messages");
+const leave_meeting = document.getElementById("leave-meeting");
 const main__chat__window = document.getElementById("main__chat__window");
 const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
@@ -13,6 +14,9 @@ var peer = new Peer(undefined, {
 });
 
 let myVideoStream;
+let currentUserId;
+let pendingMsg = 0;
+let peers = {};
 
 var getUserMedia =
   navigator.getUserMedia ||
@@ -26,7 +30,7 @@ navigator.mediaDevices
   })
   .then((stream) => {
     myVideoStream = stream;
-    addVideoStream(myVideo, stream);
+    addVideoStream(myVideo, stream, "me");
 
     peer.on("call", (call) => {
       call.answer(stream);
@@ -34,26 +38,63 @@ navigator.mediaDevices
 
       call.on("stream", (userVideoStream) => {
         addVideoStream(video, userVideoStream);
+        console.log(peers);
       });
     });
 
     socket.on("user-connected", (userId) => {
       connectToNewUser(userId, stream);
     });
-
+    socket.on("user-disconnected", (userId) => {
+      if (peers[userId]) peers[userId].close();
+      speakText(`user ${userId} leaved`);
+    });
     document.addEventListener("keydown", (e) => {
       if (e.which === 13 && chatInputBox.value != "") {
-        socket.emit("message", chatInputBox.value);
+        socket.emit("message", {
+          msg: chatInputBox.value,
+          user: currentUserId,
+        });
         chatInputBox.value = "";
       }
     });
 
-    socket.on("createMessage", (msg) => {
-      console.log(msg);
+    document.getElementById("sendMsg").addEventListener("click", (e) => {
+      if (chatInputBox.value != "") {
+        socket.emit("message", {
+          msg: chatInputBox.value,
+          user: currentUserId,
+        });
+        chatInputBox.value = "";
+      }
+    });
+
+    chatInputBox.addEventListener("focus", () => {
+      document.getElementById("chat_Btn").classList.remove("has_new");
+      pendingMsg = 0;
+      document.getElementById("chat_Btn").children[1].innerHTML = `Chat`;
+    });
+
+    socket.on("createMessage", (message) => {
+      console.log(message);
       let li = document.createElement("li");
-      li.innerHTML = msg;
+      if (message.user != currentUserId) {
+        li.classList.add("otherUser");
+        li.innerHTML = `<div><b>User(<small${message.msg}</small>):</b>${message.msg}</div>`;
+      } else {
+        li.innerHTML = `<div><b>Me:</b>${message.msg}</div>`;
+      }
+
       all_messages.append(li);
       main__chat__window.scrollTop = main__chat__window.scrollHeight;
+      if (message.user != currentUserId) {
+        pendingMsg++;
+        playChatSound();
+        document.getElementById("chat_Btn").classList.add("has_new");
+        document.getElementById(
+          "chat_Btn"
+        ).children[1].innerHTML = `Chat (${pendingMsg})`;
+      }
     });
   });
 
@@ -74,9 +115,13 @@ peer.on("call", function (call) {
 });
 
 peer.on("open", (id) => {
+  currentUserId = id;
   socket.emit("join-room", ROOM_ID, id);
 });
 
+socket.on("disconnect", function () {
+  socket.emit("leave-room", ROOM_ID, currentUserId);
+});
 // CHAT
 
 const connectToNewUser = (userId, streams) => {
@@ -87,22 +132,10 @@ const connectToNewUser = (userId, streams) => {
     console.log(userVideoStream);
     addVideoStream(video, userVideoStream);
   });
-};
-
-const addVideoStream = (videoEl, stream) => {
-  videoEl.srcObject = stream;
-  videoEl.addEventListener("loadedmetadata", () => {
-    videoEl.play();
+  call.on("close", () => {
+    video.remove();
   });
-
-  videoGrid.append(videoEl);
-  let totalUsers = document.getElementsByTagName("video").length;
-  if (totalUsers > 1) {
-    for (let index = 0; index < totalUsers; index++) {
-      document.getElementsByTagName("video")[index].style.width =
-        100 / totalUsers + "%";
-    }
-  }
+  peers[userId] = call;
 };
 
 const playStop = () => {
@@ -127,6 +160,23 @@ const muteUnmute = () => {
   }
 };
 
+const addVideoStream = (videoEl, stream, uId = "") => {
+  videoEl.srcObject = stream;
+  videoEl.id = uId;
+  videoEl.addEventListener("loadedmetadata", () => {
+    videoEl.play();
+  });
+
+  videoGrid.append(videoEl);
+  let totalUsers = document.getElementsByTagName("video").length;
+  if (totalUsers > 1) {
+    for (let index = 0; index < totalUsers; index++) {
+      document.getElementsByTagName("video")[index].style.width =
+        100 / totalUsers + "%";
+    }
+  }
+};
+
 const setPlayVideo = () => {
   const html = `<i class="unmute fa fa-pause-circle"></i>
   <span class="unmute">Resume Video</span>`;
@@ -148,4 +198,38 @@ const setMuteButton = () => {
   const html = `<i class="fa fa-microphone"></i>
   <span>Mute</span>`;
   document.getElementById("muteButton").innerHTML = html;
+};
+
+const showInvitePopup = () => {
+  document.body.classList.add("showInvite");
+  document.getElementById("roomLink").value = window.location.href;
+};
+
+const hideInvitePopup = () => {
+  document.body.classList.remove("showInvite");
+};
+
+const copyToClipBoard = () => {
+  var copyText = document.getElementById("roomLink");
+  copyText.select();
+  copyText.setSelectionRange(0, 999999);
+  document.execCommand("copy");
+  alert("Copied: " + copyText.value);
+  hideInvitePopup();
+};
+
+const ShowChat = (e) => {
+  e.classList.toggle("active");
+  document.body.classList.toggle("showChat");
+};
+
+const playChatSound = () => {
+  const chatAudio = document.getElementById("chatAudio");
+  chatAudio.play();
+};
+
+const speakText = (msgTxt) => {
+  var msg = new SpeechSynthesisUtterance();
+  msg.text = msgTxt;
+  window.SpeechSynthesis.speak(msg);
 };

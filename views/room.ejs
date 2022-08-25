@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live-Session</title>
+    <title>HOME</title>
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
@@ -17,12 +17,19 @@
     </script>
   </head>
   <body>
+   <audio id="chatAudio" src="chat_request.mp3"></audio>
+  <div class="overLay" onclick="hideInvitePopup()"></div>
+  <div class="invitepop">
+   <input type="text" value="..." id="roomLink" readonly/>
+   <button onclick="copyToClipboard">Copy</button>
+  </div>
     <div class="main">
       <div class="main__left">
         <div class="main__videos">
           <div id="video-grid"></div>
         </div>
         <div class="main__controls">
+         
           <div class="main__controls_block">
             <div
               class="main__controls_button"
@@ -43,18 +50,18 @@
           </div>
 
           <div class="main__controls_block">
-            <div class="main__controls_button">
-              <i class="fa fa-shield"></i>
-              <span>Security</span>
-            </div>
-            <div class="main__controls_button">
-              <i class="fa fa-users"></i>
-              <span>Participants</span>
-            </div>
-            <div class="main__controls_button">
+            <div class="main__controls_button"
+            id="Chat_btn"
+            onclick="ShowChat(this)">
               <i class="fa fa-comment"></i>
               <span>Chat</span>
             </div>
+            <div class="main__controls_button"
+            onclick="showInvitePopup()">
+              <i class="fa fa-user-plus"></i>
+              <span>Invite people</span>
+            </div>
+            
           </div>
 
           <div class="main__controls_block">
@@ -64,10 +71,11 @@
             </div>
           </div>
         </div>
+        
       </div>
       <div class="main__right">
         <div class="main__header">
-          <h6>Chat</h6>
+          <h6><span class="live"></span>Live Chat</h6>
         </div>
         <div class="main__chat__window" id="main__chat__window">
           <ul class="messages" id="all_messages"></ul>
@@ -78,6 +86,9 @@
             id="chat_message"
             placeholder="Type message here.."
           />
+          <button class="sendMsg" id="sendMsg">
+            <i class="fa fa-paper-plane"></i>
+          </button>
         </div>
       </div>
     </div>

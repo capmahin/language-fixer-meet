@@ -74,6 +74,32 @@ video {
   margin-top: 10px;
   display: block;
 }
+
+#leave-meeting {
+  display: none;
+}
+
+.showChat .main__right {
+  display: flex;
+  position: fixed;
+  width: 100%;
+  height: calc(100%-65px);
+  opacity: 0.8;
+}
+.showChat .main__left {
+  flex: 1;
+}
+
+/* video {
+  max-width: 100%;
+  width: 50% !important;
+  max-height: 190px;
+} */
+
+/* #video-grid {
+  justify-content: flex-start;
+  align-items: initial;
+} */
 .main__controls_button:hover {
   background-color: #34383b;
 }
